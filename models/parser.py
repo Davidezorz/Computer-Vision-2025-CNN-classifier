@@ -3,71 +3,58 @@ import re
 import torch
 import torch.nn as nn
 
-"""
-class NN:
 
+
+# ╭───────────────────────────────────────────────────────────────────────────╮
+# │                          Skip connection class                            │
+# ╰───────────────────────────────────────────────────────────────────────────╯
+
+class SkipHandle:
+    """Simple container to share tensors between layers."""
     def __init__(self):
-        pass
+        self.val = None
 
-    def Conv2d(self):
-        pass
-    def MaxPool2d(self):
-        pass
-    def Linear(self):
-        pass
-    def ReLU(self):
-        pass
-    def Softmax(self):
-        pass
-    def Flatten(self):
-        pass
 
-nn = NN()
-""" 
 
-class Skip(nn.Module):
-
-    def __init__(self, steps):
+class SkipStore(nn.Module):
+    def __init__(self, handle):
         super().__init__()
-        self.x     = None
-        self.steps = steps
-
-
-    def _store(self, x):
-        self.x = x
-        print('stored skip :)')
-
-
-    def _forward(self, x):
-        print('applied skip :)')
-        assert self.x is not None, "value not stored"
-        return self.x + x
-
+        self.handle = handle
 
     def forward(self, x):
-        self.steps -= 1
-        if self.steps == 0:
-            return self._forward(x)
-        if self.x is None:
-            self._store(x)
+        print('skip store :)')
+        self.handle.val = x                                                     # Store in shared handle
         return x
 
 
 
+class SkipAdd(nn.Module):
+    def __init__(self, handle):
+        super().__init__()
+        self.handle = handle
 
+    def forward(self, x):
+        print('skip add :)')
+        assert self.handle.val is not None, "Skip val not stored!"
+        return x + self.handle.val                                              # Retrieve and Add
+
+
+
+
+
+# ╭───────────────────────────────────────────────────────────────────────────╮
+# │                             convParser class                              │
+# ╰───────────────────────────────────────────────────────────────────────────╯
 
 class convParser:
     """
-    Class for parsing the arguments of a string that contains the covolutional 
-    NN structure.
+    Parses a string configuration into a dictionary definition for a 
+    Convolutional Neural Network.
 
     Incoming string has structure:
         [module name] [arg]:[values] [arg]:[values] ...       <- important "\n"  
         [module name] [arg]:[values] [arg]:[values] ...
         ...
-
-    Then one line will be one actuall module, with exception of the "skip_add",
-    that will change the initialization settings of the Skip class
 
     [module name] should be a key of the self.[type]_modules
     [arg]         should be the name of the argument of that module
@@ -75,6 +62,13 @@ class convParser:
                       - a single value
                       - a tuple
                       - [in_dim]->[out_dim] for convolution and linear layes
+    
+    Example:
+        conv2d channels: 1->64 kernel_size: (3,3)
+        skip_store
+        linear dims:      ->10 bias: 0
+        ...
+        skip_add
     """
 
     def __init__(self):
@@ -82,9 +76,7 @@ class convParser:
         self.linear_modules   = {'linear': nn.Linear}
         self.function_modules = {'relu':   nn.ReLU,   'softmax': nn.Softmax,
                                  'flatten': nn.Flatten}
-        self.skip_keys        = ['skip_store', 'skip_add']
-        self.skip_modlules    = {self.skip_keys[0]: Skip, 
-                                 self.skip_keys[1]: None}
+        self.skip_modlules    = {'skip_store': SkipStore, 'skip_add': SkipAdd}
 
         self.map_modules = {'conv':     self.conv_modules,
                             'linear':   self.linear_modules, 
@@ -98,50 +90,47 @@ class convParser:
 
         default = {'stride': (1, 1), 'padding': (0, 0), 'dilation': (1, 1)}
         self.default  = {'conv':     default,                                   # set default values, needed for
-                         'linear':   {},                                        # resolution computation
+                         'linear':   {},                                        # tensor shape inference
                          'function': {},
-                         'skip':     {'steps': -1}                                                  
+                         'skip':     {}                                                  
                         }
+        
+        self.skip = None
 
 
     def str2dict(self, configs_str: str):
         """function that performs the parsing"""
         configs = []
-        skip    = None
-        for i, line in enumerate(configs_str.split("\n")):                      # iterate over lines: one line, one module
+        for line in configs_str.split("\n"):                                    # iterate over lines: one line = one module
             line = line.strip()
             if not line: continue                                               # skip empty lines
                 
             parts = [p.strip() for p in re.split(r"(\w+):", line)]
             module_type, category = parts[0].lower(), None
 
-            if module_type == self.skip_keys[-1]:                               # ◀─┬ Exception of the skip_add instruction: 
-                assert skip, "skip need to stored a value before"               #   ╭ The "step" that the Skip instance
-                skip['config']['steps'] = i - skip['i'] + 1                     # ◀─┤ should wait is the difference of current 
-                skip = None                                                     #   │ iteration minus the iteration at which  
-                continue                                                        #   ╰ it was stored
+            for key, modules in self.map_modules.items():                       #  1. Identify Category and Class
+                if module_type in modules:                                      #   ╭ Find the right modules container
+                    category = key                                              # ◀─┤ Assign category (conv, linear...)
+                    config   = self.default[key].copy()                         # ◀─┤ Load default args
+                    module   = modules[module_type]                             # ◀─┴ Load the class (NOT INSTANCE)
 
-            for key, modules in self.map_modules.items():
-                if module_type in modules:
-                    category = key
-                    config   = self.default[key].copy()
-                    module   = modules[module_type]
-
-                    if module_type == self.skip_keys[0]:
-                        assert skip is None, "multiple skip not supported"
-                        skip = {'config': config, 'i': i}
-
-            if category is None:
-                raise ValueError(f"Type of module '{module_type}' not supported")
+            if category == 'skip':                                              # 2. Handle Skip Logic (Store vs Add)
+                is_add = (module == SkipAdd)                                    #   ╭ Check if we are closing a skip
+                assert self.skip or not is_add, "found skip_add without store"  # ◀─┴ Error: 'Add' before 'Store'
+                self.skip = self.skip if is_add else SkipHandle()               #   ╭ Create Handle if Store, else reuse
+                config['handle'] = self.skip                                    # ◀─┤ Share Handle between Store & Add
+                self.skip =  None if is_add else self.skip                      #   ╰ Reset handle if we just closed it
+            elif category is None:
+                raise ValueError(f"Module '{module_type}' not supported")
             
-            for type_str, value_str in zip(parts[1::2], parts[2::2]):
-                if '->' in value_str:
-                    keys, values = self._parseArrow(value_str, category)
-                    config[keys[0]], config[keys[1]] = values[0], values[1]
+            for type_str, value_str in zip(parts[1::2], parts[2::2]):           # 3. Parse Standard Arguments
+                if '->' in value_str:                                           #   ╭ Check for arrow syntax
+                    keys, values = self._parseArrow(value_str, category)        # ◀─┤ Parse arrow (e.g. 1->64)
+                    config[keys[0]], config[keys[1]] = values[0], values[1]     # ◀─┴ Set in_dim and out_dim
                 else:
-                    value_str = value_str.replace("(", "").replace(")", "")
-                    values = [int(v.strip()) for v in value_str.split(",")]
-                    config[type_str] = values if len(values)>1 else values[0]
+                    value_str = value_str.replace("(", "").replace(")", "")     #   ╭ Clean tuples/ints
+                    values = [int(v.strip()) for v in value_str.split(",")]     # ◀─┤ Convert string to list of ints
+                    config[type_str] = values if len(values)>1 else values[0]   # ◀─┴ Store as tuple if len > 1
             
             configs.append({ 'type':        module_type, 
                              'category':    category,

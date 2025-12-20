@@ -2,6 +2,15 @@ from models.parser import convParser
 from models.generalCNN import CNN
 import torch
 
+
+"""
+─  │
+┌  ┐
+└  ┘
+┬  ┴  ├  ┤
+┼
+"""
+
 if __name__ == '__main__':
 
     settings =  """ 
