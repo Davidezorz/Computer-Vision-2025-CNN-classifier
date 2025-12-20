@@ -3,6 +3,17 @@ import torch.nn as nn
 import math
 from . import parser
 
+
+"""
+╭ CONVENTIONS ────────────────────────────────────────────────────────────────╮
+│ ├─• B        ▶ batch size                                                   │
+│ ├─• H        ▶ height of the image                                          │
+│ ├─• W        ▶ width of the image                                           │
+│ ╰─• C        ▶ number of channerls                                          │
+╰─────────────────────────────────────────────────────────────────────────────╯
+"""
+
+
 class CNN(nn.Module):
 
     def __init__(self, image_dims, configs):

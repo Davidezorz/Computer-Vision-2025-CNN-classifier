@@ -25,7 +25,7 @@ class NN:
 nn = NN()
 """ 
 
-class Skip(nn.Module): #nn.Module):
+class Skip(nn.Module):
 
     def __init__(self, steps):
         super().__init__()
@@ -57,6 +57,25 @@ class Skip(nn.Module): #nn.Module):
 
 
 class convParser:
+    """
+    Class for parsing the arguments of a string that contains the covolutional 
+    NN structure.
+
+    Incoming string has structure:
+        [module name] [arg]:[values] [arg]:[values] ...       <- important "\n"  
+        [module name] [arg]:[values] [arg]:[values] ...
+        ...
+
+    Then one line will be one actuall module, with exception of the "skip_add",
+    that will change the initialization settings of the Skip class
+
+    [module name] should be a key of the self.[type]_modules
+    [arg]         should be the name of the argument of that module
+    [values]      could be:
+                      - a single value
+                      - a tuple
+                      - [in_dim]->[out_dim] for convolution and linear layes
+    """
 
     def __init__(self):
         self.conv_modules     = {'conv2d': nn.Conv2d, 'maxpool2d': nn.MaxPool2d}
@@ -64,13 +83,13 @@ class convParser:
         self.function_modules = {'relu':   nn.ReLU,   'softmax': nn.Softmax,
                                  'flatten': nn.Flatten}
         self.skip_keys        = ['skip_store', 'skip_add']
-        self.skip             = {self.skip_keys[0]: Skip, 
+        self.skip_modlules    = {self.skip_keys[0]: Skip, 
                                  self.skip_keys[1]: None}
 
         self.map_modules = {'conv':     self.conv_modules,
                             'linear':   self.linear_modules, 
                             'function': self.function_modules,
-                            'skip':     self.skip}
+                            'skip':     self.skip_modlules}
         
         self.map_arrows  = {'conv':     ('in_channels', 'out_channels'),
                             'linear':   ('in_features', 'out_features'), 
@@ -86,20 +105,21 @@ class convParser:
 
 
     def str2dict(self, configs_str: str):
+        """function that performs the parsing"""
         configs = []
         skip    = None
-        for i, line in enumerate(configs_str.split("\n")):
+        for i, line in enumerate(configs_str.split("\n")):                      # iterate over lines: one line, one module
             line = line.strip()
-            if not line: continue
+            if not line: continue                                               # skip empty lines
                 
             parts = [p.strip() for p in re.split(r"(\w+):", line)]
             module_type, category = parts[0].lower(), None
 
-            if module_type == self.skip_keys[-1]:
-                assert skip, "skip need to stored a value before"
-                skip['config']['steps'] = i - skip['i'] + 1
-                skip = None
-                continue
+            if module_type == self.skip_keys[-1]:                               # ◀─┬ Exception of the skip_add instruction: 
+                assert skip, "skip need to stored a value before"               #   ╭ The "step" that the Skip instance
+                skip['config']['steps'] = i - skip['i'] + 1                     # ◀─┤ should wait is the difference of current 
+                skip = None                                                     #   │ iteration minus the iteration at which  
+                continue                                                        #   ╰ it was stored
 
             for key, modules in self.map_modules.items():
                 if module_type in modules:
