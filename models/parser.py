@@ -22,7 +22,6 @@ class SkipStore(nn.Module):
         self.handle = handle
 
     def forward(self, x):
-        print('skip store :)')
         self.handle.val = x                                                     # Store in shared handle
         return x
 
@@ -34,7 +33,6 @@ class SkipAdd(nn.Module):
         self.handle = handle
 
     def forward(self, x):
-        print('skip add :)')
         assert self.handle.val is not None, "Skip val not stored!"
         return x + self.handle.val                                              # Retrieve and Add
 

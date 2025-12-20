@@ -1,15 +1,7 @@
 from models.parser import convParser
 from models.generalCNN import CNN
+from dataset import dataloader
 import torch
-
-
-"""
-─  │
-┌  ┐
-└  ┘
-┬  ┴  ├  ┤
-┼
-"""
 
 if __name__ == '__main__':
 
@@ -47,7 +39,13 @@ if __name__ == '__main__':
     cnn = CNN(X_train.shape, settings_dict)
     print('cnn:\n\n', cnn)
     
-
+    print('\nforward: ')
     logits = cnn.forward(X_train)
     print(logits)
+
+    print('\nstore...')
+    cnn.save()
+
+    print('\nload...')
+    cnn.load()
     """"""

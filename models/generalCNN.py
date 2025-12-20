@@ -24,7 +24,7 @@ class CNN(nn.Module):
     blocks.
 
     Args:
-        image_dims (tuple): Input image dimensions. 
+        image_dims (tuple): Input image dimensions (could also be a tensor)
                             Supported formats: (H, W) or (C, H, W).
                             If (H, W) is provided, C=1 is assumed (grayscale).
         configs (list):     Ordered list of layer configurations. 
@@ -41,6 +41,8 @@ class CNN(nn.Module):
 
                             Note:  in_channels of Conv Layer and in_features in
                             linear layer, -1 means that the value is inferred
+        
+        name (string):      Name of the network, used in save/load parameters
 
     Example:
         import torch.nn as nn
@@ -57,8 +59,9 @@ class CNN(nn.Module):
         model = CNN(image_dims=(28, 28), configs=configs)
     """
 
-    def __init__(self, image_dims, configs):
+    def __init__(self, image_dims, configs: dict, name: str = 'CNN'):
         super().__init__()
+        self.name = name
         blocks = []
         image_dims = list(image_dims)
 
@@ -105,17 +108,15 @@ class CNN(nn.Module):
         return math.floor(coef3 + 1)
 
 
-    def _initWeights(self, module):
-        """Applies Kaiming initialization to Linear and Conv layers."""
-        if isinstance(module, nn.Linear):                                       # Initialize Linear Layers
-            nn.init.kaiming_uniform_(module.weight, mode='fan_in')
-            if module.bias is not None:
-                nn.init.constant_(module.bias, 0)
-                
-        elif isinstance(module, nn.Conv2d):                                     # Initialize Convolutional Layers
-            nn.init.kaiming_normal_(module.weight, mode='fan_out')
-            if module.bias is not None:
-                nn.init.constant_(module.bias, 0)
+    def _initWeights(self, module):                                             # ◀─┬ Applies Kaiming initialization 
+        if isinstance(module, nn.Linear):                                       #   ◀ Initialize Linear Layers
+            nn.init.kaiming_uniform_(module.weight, mode='fan_in')              #   │            
+            if module.bias is not None:                                         #   │                 
+                nn.init.constant_(module.bias, 0)                               #   │
+        elif isinstance(module, nn.Conv2d):                                     #   ◀ Initialize Convolutional Layers
+            nn.init.kaiming_normal_(module.weight, mode='fan_out')              #   │            
+            if module.bias is not None:                                         #   │                  
+                nn.init.constant_(module.bias, 0)                               #   ╯
 
 
     def forward(self, x):
@@ -131,8 +132,24 @@ class CNN(nn.Module):
     
     
     @torch.no_grad()
-    def predict(self, x):
-        self.eval()
-        logits = self(x)
-        probs = torch.softmax(logits, dim=-1)
-        return probs.argmax(dim=-1)
+    def predict(self, x):                                                       # ◀┬─ performs inference
+        self.eval()                                                             #  │  by taking the most
+        logits = self(x)                                                        #  │  probable label
+        probs = torch.softmax(logits, dim=-1)                                   #  │ 
+        return probs.argmax(dim=-1)                                             #  ╯
+    
+
+    def save(self, folder='.weights/', name=None):                              # ◀┬─ save model 
+        name = name if name else self.name                                      #  │  weights
+        file = folder + name + '.pth'                                           #  │  
+        torch.save(self.state_dict(), file)                                     #  ╯
+
+
+    def load(self, folder='.weights/', name=None):                              # ◀┬─ load model
+        name = name if name else self.name                                      #  │  weights
+        file = folder + name + '.pth'                                           #  │  
+        try:                                                                    #  │ 
+            self.load_state_dict(torch.load(file, weights_only=True))           #  │
+            print('model loaded')                                               #  │
+        except Exception as e:                                                  #  │
+            print("Model weights not avaiable \n\n", e)                         #  ╯
