@@ -1,6 +1,6 @@
 import torch
 from torchvision import datasets, transforms
-from datasets import ImageFolder
+from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
 import os
 
@@ -69,68 +69,39 @@ import os
     ...
 """
 
-class GetDataloaders:
+class DatasetManager:
     
-    def __init__(self, folder_path: str, resolution):
+    def __init__(self, folder_path: str, resolution, val_split: int = 0.1):
         self.folder_path = folder_path
         self.resolution  = resolution
-        pass
+        self.val_split   = val_split
 
-    def get(self):
-        transform = transforms.Compose([
-            transforms.Resize((224, 224)),
+        self.transform = transforms.Compose([
+            transforms.Resize(self.resolution),
             transforms.ToTensor(),
         ])
 
-        train_folder = os.path.join(self.folder_path, 'train')
-        test_folder  = os.path.join(self.folder_path, 'test')
-
-        train_dataset = ImageFolder(root=train_folder, transform=transform)
-        test_dataset  = ImageFolder(root=test_folder,  transform=transform)
 
 
+    def get(self, B: int = 32):
+        train_folder = os.path.join(self.folder_path, 'train')                  # ◀─┬ get the training and 
+        test_folder  = os.path.join(self.folder_path, 'test')                   # ◀─┴ test folders
 
+        train_data = ImageFolder(root=train_folder, transform=self.transform)   # ◀─┬ open data and apply
+        test_data  = ImageFolder(root=test_folder,  transform=self.transform)   # ◀─┴ transformations
+        
+        val_size   = int(len(train_data) * self.val_split)                      # ◀─╮ compute the actual training 
+        train_size = len(train_data) - val_size                                 # ◀─╯ and validation dims
 
-def get_dataloaders(data_dir='.data', batch_size=32, val_split=0.2):
-    # 1. Define Transforms
-    # Basic transform for now (Resize + ToTensor)
-    data_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-    ])
+        X_train, X_val = random_split(                                          # ◀─╮ 
+            train_data,                                                         #   │ Apply the split according 
+            [train_size, val_size],                                             #   ╰ to the computed dimensions
+            generator=torch.Generator().manual_seed(42)                         # ◀── Seed for reproducibility
+        )
 
-    # 2. Load the Full Training Data
-    train_dir = os.path.join(data_dir, 'train')
-    test_dir = os.path.join(data_dir, 'test')
+        train_loader = DataLoader(X_train, batch_size=B, shuffle=True)          # ◀─╮ crete the Dataloader  
+        val_loader   = DataLoader(X_val, batch_size=B, shuffle=False)           #   │ for each data subdset
+        test_loader  = DataLoader(test_data, batch_size=B, shuffle=False)       # ◀─╯
+        data_loaders = [train_loader, val_loader, test_loader]                  # ◀── pack the Dataloaders
 
-    # Load the entire folder as one dataset first
-    full_train_dataset = ImageFolder(root=train_dir, transform=data_transform)
-    test_dataset = ImageFolder(root=test_dir, transform=data_transform)
-
-    # 3. Calculate Split Sizes
-    # e.g., if you have 1000 images and val_split is 0.2 -> val gets 200, train gets 800
-    val_size = int(len(full_train_dataset) * val_split)
-    train_size = len(full_train_dataset) - val_size
-
-    # 4. Perform the Split
-    # This randomly assigns images to either train_set or val_set
-    train_subset, val_subset = random_split(
-        full_train_dataset, 
-        [train_size, val_size],
-        generator=torch.Generator().manual_seed(42) # Fixed seed for reproducibility
-    )
-
-    # 5. Extract Class Names
-    # Note: access classes from the underlying full dataset, not the subset
-    class_names = full_train_dataset.classes
-    print(f"Classes: {class_names}")
-    print(f"Train size: {len(train_subset)}, Val size: {len(val_subset)}, Test size: {len(test_dataset)}")
-
-    # 6. Create DataLoaders
-    # Shuffle Train: YES (Crucial for learning)
-    # Shuffle Val/Test: NO (Usually not needed, helps if you want to visualize fixed examples)
-    train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    return train_loader, val_loader, test_loader, class_names
+        return data_loaders, train_data.classes

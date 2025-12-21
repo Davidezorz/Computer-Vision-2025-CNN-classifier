@@ -32,15 +32,16 @@ class CNN(nn.Module):
                             built manually.
                             
                             Required keys per config dict:
-                            - 'category': 'conv', 'linear', 'function', or 'skip'
+                            - 'category': 'conv', 'linear', 'function', 'skip'
                             - 'class':    The PyTorch class (e.g., nn.Conv2d)
                             - 'args':     Dict of arguments for that class
                             
                             Note: For manual skip connections, you must manage
-                            SkipStore, SkipAdd, and SkipHandle classes yourself.
+                            SkipStore, SkipAdd and SkipHandle classes yourself.
 
-                            Note:  in_channels of Conv Layer and in_features in
-                            linear layer, -1 means that the value is inferred
+                            Note:  when 'in_channels' (in conv layers) and 
+                            'in_features' (in linear layers) are equal to -1,
+                            the values will be inferred.
         
         name (string):      Name of the network, used in save/load parameters
 
@@ -52,6 +53,8 @@ class CNN(nn.Module):
                       'padding': (2,2),  'stride': (1,1),  'dilation': (1,1)}},
             
             {'category': 'function', 'class': nn.ReLU, 'args': {}},
+            
+            {'category': 'function', 'class': nn.Flatten, 'args': {}},
 
             {'category': 'linear', 'class': nn.Linear,   
              'args': {'in_features': -1, 'out_features': 10}}
