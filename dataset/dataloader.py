@@ -4,83 +4,33 @@ from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
 import os
 
-"""
-─  │
-┌  ┐
-└  ┘
-┬  ┴  ├  ┤
-┼
-"""
 
 
-"""
-.data/
-  ├ train
-  │  ├ Bedroom/
-  │  │  ├ image_0001.jpg
-  │  │  ├ ...
-  │  ├ InsideCity/
-  │  │  ├ image_0005.jpg
-  │  │  ├ ...
-  │  ├ OpenCountry/
-  │  │  ├ image_00012.jpg
-  │  │  ├ ...
-  │  ├ Coast/
-  │  │  ├ image_0004.jpg
-  │  │  ├ ...
-  │  ├ Kitchen/
-  │  │  ├ image_0002.jpg
-  │  │  ├ ...
-  │  ├ Store/
-  │  │  ├ image_0003.jpg
-  │  │  ├ ...
-  │  ├ Forest/
-  │  │  ├ image_0002.jpg
-  │  │  ├ ...
-  │  ├ LivingRoom/
-  │  │  ├ image_0009.jpg
-  │  │  ├ ...
-  │  ├ Street/
-  │  │  ├ image_0008.jpg
-  │  │  ├ ...
-  │  ├ Highway/
-  │  │  ├ image_0015.jpg
-  │  │  ├ ...
-  │  ├ Mountain/
-  │  │  ├ image_0019.jpg
-  │  │  ├ ...
-  │  ├ Suburb/
-  │  │  ├ image_0011.jpg
-  │  │  ├ ...
-  │  ├ Industrial/
-  │  │  ├ image_0021.jpg
-  │  │  ├ ...
-  │  ├ Office/
-  │  │  ├ image_0006.jpg
-  │  │  ├ ...
-  │  └ TallBuilding/
-  │     ├ image_0012.jpg
-  │     └ ...
-  └ test/
-    ├ ... 
-    │  ├ ... 
-    │  └ ...
-    ├ ... 
-    ...
-"""
+
+class ChannelMean:                                                              # tensor shape  C H W, but
+    def __call__(self, tensor):                                                 # all the channels are 
+        return tensor.mean(dim=0, keepdim=True)                                 # equal, then -> 1 H W
+    
 
 class DatasetManager:
     
-    def __init__(self, folder_path: str, resolution, val_split: int = 0.1):
+    def __init__(self, folder_path: str, resolution, val_split: float = 0.1, 
+                 normalize: bool = True):
         self.folder_path = folder_path
         self.resolution  = resolution
         self.val_split   = val_split
+        self.normalize   = normalize
 
-        self.transform = transforms.Compose([
+        transform_steps = [
             transforms.Resize(self.resolution),
-            transforms.ToTensor(),
-        ])
+            transforms.ToTensor(),  # This always converts to [0.0, 1.0]
+        ]
 
+        if not self.normalize:
+            transform_steps.append(transforms.Lambda(lambda x: x * 255.0))
+        transform_steps.append(ChannelMean())
+
+        self.transform = transforms.Compose(transform_steps)
 
 
     def get(self, B: int = 32):

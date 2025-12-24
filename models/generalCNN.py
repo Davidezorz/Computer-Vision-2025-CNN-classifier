@@ -44,6 +44,13 @@ class CNN(nn.Module):
                             the values will be inferred.
         
         name (string):      Name of the network, used in save/load parameters
+        init_type (class):  Funtion for wheights initialization
+        init_conf (dict):   Arguments for the config function. Is a dict with 
+                            the following keys and values:
+                              - 'conv': dict with arguments for convolutions 
+                                        initialization
+                              - 'linear': dict with arguments for linear 
+                                          layerinitialization
 
     Example:
         import torch.nn as nn
@@ -62,22 +69,27 @@ class CNN(nn.Module):
         model = CNN(image_dims=(28, 28), configs=configs)
     """
 
-    def __init__(self, image_dims, configs: dict, name: str = 'CNN'):
+    def __init__(self, image_dims, configs: dict, name: str = 'CNN',
+                 init_type = nn.init.kaiming_uniform_,
+                 init_conf={'conv': {}, 'linear': {}}):
         super().__init__()
         self.name = name
+        self.init_type = init_type
+        self.init_conf = init_conf
+
         blocks = []
         image_dims = list(image_dims)
 
         self.current_dims = image_dims if len(image_dims)>2 else [1]+image_dims 
         self.in_dims = self.current_dims.copy()
-        print(self.current_dims)
+        print(f"{self.name}\n{'in_dims':<12} {self.current_dims}")
 
         for config in configs:                                                  # For each config container
             self._inferredOutDim(config['args'], config['category'])            # ◀── Updates self.current_dims
             module = config['class'](**config['args'])                          # ◀─┬ Add the module cratedusing 
             blocks.append(module)                                               # ◀─┴ the correct arguments
 
-            print(f"{config['type']}: \t {self.current_dims}")
+            print(f"{config['type']:<12} {self.current_dims}")
 
         self.blocks    = nn.ModuleList(blocks)
         self.apply(self._initWeights)
@@ -113,11 +125,11 @@ class CNN(nn.Module):
 
     def _initWeights(self, module):                                             # ◀─┬ Applies Kaiming initialization 
         if isinstance(module, nn.Linear):                                       #   ◀ Initialize Linear Layers
-            nn.init.kaiming_uniform_(module.weight, mode='fan_in')              #   │            
+            self.init_type(module.weight, **self.init_conf['linear'])           #   │            
             if module.bias is not None:                                         #   │                 
                 nn.init.constant_(module.bias, 0)                               #   │
         elif isinstance(module, nn.Conv2d):                                     #   ◀ Initialize Convolutional Layers
-            nn.init.kaiming_normal_(module.weight, mode='fan_out')              #   │            
+            self.init_type(module.weight, **self.init_conf['conv'])             #   │            
             if module.bias is not None:                                         #   │                  
                 nn.init.constant_(module.bias, 0)                               #   ╯
 
@@ -125,7 +137,8 @@ class CNN(nn.Module):
     def forward(self, x):
         if x.ndim < 4:                                                          #   ╭ Handle single image input
             x = x.view(1, *self.in_dims)                                        # ◀─┴ Reshape -> 1 C H W
-
+        #print('\nforward\n')
+        #print(f"{-1}: {x.shape}")
         for i, block in enumerate(self.blocks[:-1]):                            #   ╭ Apply all 
             x = block(x)                                                        # ◀─┴ Blocks
             # print(f"{i}: {x.shape}") 
@@ -135,11 +148,18 @@ class CNN(nn.Module):
     
     
     @torch.no_grad()
-    def predict(self, x):                                                       # ◀┬─ performs inference
-        self.eval()                                                             #  │  by taking the most
-        logits = self(x)                                                        #  │  probable label
+    def predict(self, x):                                                       # ◀┬─ performs inference by
+        self.eval()                                                             #  │  taking the most probable
+        logits = self(x)                                                        #  │  label (doens't compute 
+        return logits.argmax(dim=-1)                                            #  ╯  the softamx)
+
+
+    @torch.no_grad()
+    def probabilities(self, x):                                                 # ◀┬─ compute input labels 
+        self.eval()                                                             #  │  probabilities
+        logits = self(x)                                                        #  │  
         probs = torch.softmax(logits, dim=-1)                                   #  │ 
-        return probs.argmax(dim=-1)                                             #  ╯
+        return probs                                                            #  ╯
     
 
     def save(self, folder='.weights/', name=None):                              # ◀┬─ save model 
