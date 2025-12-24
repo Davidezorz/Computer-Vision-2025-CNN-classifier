@@ -9,7 +9,6 @@ This repository contains a Convolutional Neural Network (CNN) classifier, develo
 ## 📦 Prerequisites
 
 Before running the scripts, ensure you have the necessary dependencies installed. 
-(Optional: If you have a requirements.txt)
 ```bash
 pip install -r requirements.txt
 ```
