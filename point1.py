@@ -4,6 +4,7 @@ from dataset.dataloader import DatasetManager
 from train import train
 from utils.utils import getDevice, setupMatplotlib
 import torch
+import numpy as np
 import time
 import matplotlib.pyplot as plt
 from utils import models_eval 
@@ -17,7 +18,8 @@ import argparse
 
 
 
-if __name__ == '__main__':
+
+if __name__ == '__main__': # 18
 
     parser = argparse.ArgumentParser(description="Script for training and plotting")
     parser.add_argument('-train', type=str, default='True', 
@@ -27,8 +29,9 @@ if __name__ == '__main__':
     
     setupMatplotlib()
 
-    torch.manual_seed(2)                                                        # ◀─┬ Setting the seed and
-    image_dims = (64, 64)                                                       # ◀─┴ image resolution
+    np.random.seed(44)                                                          # ◀─╮
+    torch.manual_seed(0)                                                        # ◀─┴ Setting the seed and
+    image_dims = (64, 64)                                                       # ◀── image resolution
     config_str = """
                  conv2d    channels: ->8   kernel_size: (3, 3)  stride: (1, 1)
                  relu 
@@ -76,7 +79,7 @@ if __name__ == '__main__':
         start = time.time()
         optim_class = torch.optim.SGD                                           # ◀─┬ define the optimizer class
         optim_opt   = {'momentum': 0.9}                                         # ◀─┴ and its config
-        losses = train(cnn, train_loader, val_loader, patience=40, lr=5e-4,     # ◀─┬ Training loop  
+        losses = train(cnn, train_loader, val_loader, patience=30, lr=11e-4,    # ◀─┬ Training loop  
                     device=device, epochs=12*3,  optim_class=optim_class,       #   │
                     optim_opt=optim_opt, use_amp=True)                          #   ╯ 
         print(f"\ntime: {time.time()-start: .3f} s\n")

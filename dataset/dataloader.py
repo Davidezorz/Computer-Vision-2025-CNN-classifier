@@ -1,8 +1,10 @@
 import torch
 from torchvision import datasets, transforms
 from torchvision.datasets import ImageFolder
-from torch.utils.data import DataLoader, random_split
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Subset, random_split
 import os
+import numpy as np
 
 
 
@@ -39,15 +41,17 @@ class DatasetManager:
 
         train_data = ImageFolder(root=train_folder, transform=self.transform)   # ◀─┬ open data and apply
         test_data  = ImageFolder(root=test_folder,  transform=self.transform)   # ◀─┴ transformations
-        
-        val_size   = int(len(train_data) * self.val_split)                      # ◀─╮ compute the actual training 
-        train_size = len(train_data) - val_size                                 # ◀─╯ and validation dims
 
-        X_train, X_val = random_split(                                          # ◀─╮ 
-            train_data,                                                         #   │ Apply the split according 
-            [train_size, val_size],                                             #   ╰ to the computed dimensions
-            #generator=torch.Generator().manual_seed(42)                         # ◀── Seed for reproducibility
-        )
+        targets = train_data.targets                                            # ◀── Extract the labels 
+        train_idx, val_idx = train_test_split(                                  # ◀─┬ Use sk to generate stratified indices
+            np.arange(len(targets)),                                            #   │ ◀ array of indices to split
+            test_size=self.val_split,                                           #   │ 
+            shuffle=True,                                                       #   │ ◀ shuffle
+            stratify=targets                                                    #   │ ◀ stratify by label
+        )                                                                       #  ─╯
+
+        X_train = Subset(train_data, train_idx)                                 #  ─╮ create the Subsets 
+        X_val   = Subset(train_data, val_idx)                                   #  ─╯ using the indices
 
         train_loader = DataLoader(X_train, batch_size=B, shuffle=True)          # ◀─╮ crete the Dataloader  
         val_loader   = DataLoader(X_val, batch_size=B, shuffle=False)           #   │ for each data subdset
