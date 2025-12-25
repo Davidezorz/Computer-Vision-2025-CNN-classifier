@@ -10,54 +10,55 @@ from utils.utils import getDevice
 # ╰───────────────────────────────────────────────────────────────────────────╯
 
 class Validation:
+
     def __init__(self, data_loader, patience=5, min_delta=0.0):
-        self.best_loss    = float('inf')
-        self.best_weights = None
+        self.best_loss    = float('inf')                                        # ◀─╮ Track best
+        self.best_weights = None                                                #   ╰ performance
         self.data_loader  = data_loader
         
-        # Early Stopping parameters
-        self.patience     = patience
-        self.min_delta    = min_delta
-        self.counter      = 0
-        self.early_stop   = False
+        self.patience     = patience                                            # ◀─╮
+        self.min_delta    = min_delta                                           #   │
+        self.counter      = 0                                                   #   │ Early Stopping
+        self.early_stop   = False                                               #   ╰ parameters
+
 
     def update(self, criterion, model):
-        # 1. Compute current validation loss
-        val_loss, val_accuracy = self.computeLoss(criterion, model)
+        val_loss, val_accuracy = self.computeLoss(criterion, model)             # ◀── Run evaluation pass
         
-        # 2. Check if this is the best loss (minus a small delta threshold)
-        if val_loss < (self.best_loss - self.min_delta):
-            self.best_loss = val_loss
-            self.best_weights = copy.deepcopy(model.state_dict())
-            self.counter = 0  # Reset counter on improvement
-        else:
-            self.counter += 1
-            if self.counter >= self.patience:
-                self.early_stop = True
+        if val_loss < (self.best_loss - self.min_delta):                        # ◀─┬ Check for improvement
+            self.best_loss = val_loss                                           # ◀─┤ Store the best loss 
+            self.best_weights = copy.deepcopy(model.state_dict())               # ◀─┤ Save deepcopy of weights
+            self.counter = 0                                                    # ◀─╯ Reset patience counter
+        else:                                                                   # ◀─┬ No improvement
+            self.counter += 1                                                   # ◀─┤ Uodate counter
+            if self.counter >= self.patience:                                   # ◀─┤ Check patience limit
+                self.early_stop = True                                          # ◀─╯ Trigger stopping
                 
         return val_loss, val_accuracy
+
 
     def getWeights(self):
         return self.best_weights
 
-    @torch.no_grad()
+
+    @torch.no_grad()                                                            # ◀── Disable gradient engine
     def computeLoss(self, criterion, model):
-        device = next(model.parameters()).device
+        device = next(model.parameters()).device                                # ◀── Auto-detect device from model
         running_loss = 0.0
         running_accuracy = 0.0
         
-        for X, y in self.data_loader:
-            X, y = X.to(device), y.to(device)
-            logits = model(X)
-            y_pred = logits.argmax(dim=-1)
-            loss = criterion(logits, y)
-            running_loss += loss.item()
-            running_accuracy += (y_pred == y).float().mean().item()
+        for X, y in self.data_loader:                                           # ◀─╮ For each batch in the 
+            X, y = X.to(device), y.to(device)                                   #   ╰ dataloader
+            logits = model(X)                                                   # ◀─┬ Compute the logits,
+            y_pred = logits.argmax(dim=-1)                                      # ◀─┤ predictions
+            loss = criterion(logits, y)                                         # ◀─╯ and the loss
             
-        avg_loss   = running_loss / len(self.data_loader)
-        avg_accuracy = running_accuracy / len(self.data_loader)
+            running_loss += loss.item()                                         # ◀─╮ Accumulate
+            running_accuracy += (y_pred == y).float().mean().item()             # ◀─╯ metrics
+            
+        avg_loss   = running_loss / len(self.data_loader)                       # ◀─╮ Average over
+        avg_accuracy = running_accuracy / len(self.data_loader)                 # ◀─╯ total batches
         return avg_loss, avg_accuracy
-
 
 
 
@@ -123,14 +124,14 @@ def train(model, train_loader, val_loader,
             scaler.scale(loss).backward()                                       # ◀─┬ Compute gradients
             scaler.step(optimizer)                                              # ◀─╯ Update parameters
             scaler.update()                                                     # ◀── Adjusts the scale factor
-            lr_scheduler.step()                                                    # ◀── Update learning rate
+            lr_scheduler.step()                                                 # ◀── Update learning rate
         
             current_loss     += loss.item()                                     # ◀─┬ Update running 
             current_accuracy += (y_pred == y).float().mean().item()             # ◀─┤ trackers
             steps_since_log  += 1                                               # ◀─╯ 
 
             # ---------- Validation & Logging Step ----------
-            if (i + 1) % log_interval == 0:                                     # VALIDATION and LOSS storing
+            if (i + 1) % log_interval == 0:                                     # ◀── VALIDATION and LOSS storing
                 avg_train_loss = current_loss / steps_since_log
                 avg_train_accuracy = current_accuracy / steps_since_log
                 

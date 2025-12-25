@@ -1,4 +1,5 @@
 import torch
+import matplotlib.pyplot as plt
                                                          
 def getDevice(device: str = None) -> str:                                       #   ╭ Device auto
     """Selects the best available device or verifies the requested one."""      # ◀─┤ detection  
@@ -8,3 +9,9 @@ def getDevice(device: str = None) -> str:                                       
         return 'mps'                                                            #   ╰
     return 'cpu'
     
+
+def setupMatplotlib():
+    plt.style.use('ggplot')
+    plt.rcParams['axes.facecolor'] = '#FFFFFF'
+    plt.rcParams['grid.linewidth'] = 1
+    plt.rcParams['grid.color'] = '#F9F9F9'

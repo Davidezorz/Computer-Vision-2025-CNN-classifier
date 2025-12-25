@@ -46,7 +46,7 @@ class DatasetManager:
         X_train, X_val = random_split(                                          # ◀─╮ 
             train_data,                                                         #   │ Apply the split according 
             [train_size, val_size],                                             #   ╰ to the computed dimensions
-            generator=torch.Generator().manual_seed(42)                         # ◀── Seed for reproducibility
+            #generator=torch.Generator().manual_seed(42)                         # ◀── Seed for reproducibility
         )
 
         train_loader = DataLoader(X_train, batch_size=B, shuffle=True)          # ◀─╮ crete the Dataloader  
