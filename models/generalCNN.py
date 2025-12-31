@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 import math
-from . import parser
-
+import warnings
 
 """
 ╭ CONVENTIONS ────────────────────────────────────────────────────────────────╮
@@ -45,8 +44,8 @@ class CNN(nn.Module):
         
         name (string):      Name of the network, used in save/load parameters
         init_type (class):  Funtion for wheights initialization
-        init_conf (dict):   Arguments for the config function. Is a dict with 
-                            the following keys and values:
+        init_conf (dict):   Arguments for the config function. It is a dict 
+                            with the following keys and values:
                               - 'conv': dict with arguments for convolutions 
                                         initialization
                               - 'linear': dict with arguments for linear 
@@ -56,15 +55,16 @@ class CNN(nn.Module):
         import torch.nn as nn
         configs = [
             {'category': 'conv',   'class': nn.Conv2d,                           
-             'args': {'in_channels': -1, 'out_channels': 6, 'kernel_size': (5,5)
-                      'padding': (2,2),  'stride': (1,1),  'dilation': (1,1)}},
+                'args': {'in_channels': -1, 'out_channels': 6, 
+                        'kernel_size': (5,5), 'padding': (2,2),  
+                        'stride': (1,1),  'dilation': (1,1)}},
             
             {'category': 'function', 'class': nn.ReLU, 'args': {}},
             
             {'category': 'function', 'class': nn.Flatten, 'args': {}},
 
             {'category': 'linear', 'class': nn.Linear,   
-             'args': {'in_features': -1, 'out_features': 10}}
+                'args': {'in_features': -1, 'out_features': 10}}
         ]
         model = CNN(image_dims=(28, 28), configs=configs)
     """
@@ -89,7 +89,7 @@ class CNN(nn.Module):
             module = config['class'](**config['args'])                          # ◀─┬ Add the module cratedusing 
             blocks.append(module)                                               # ◀─┴ the correct arguments
 
-            print(f"{config['type']:<12} {self.current_dims}")
+            print(f"{str(config.get('type')):<12} {self.current_dims}")
 
         self.blocks    = nn.ModuleList(blocks)
         self.apply(self._initWeights)
@@ -124,13 +124,13 @@ class CNN(nn.Module):
 
 
     def _initWeights(self, module):                                             # ◀─┬ Applies Kaiming initialization 
-        if isinstance(module, nn.Linear):                                       #   ◀ Initialize Linear Layers
-            self.init_type(module.weight, **self.init_conf['linear'])           #   │            
-            if module.bias is not None:                                         #   │                 
+        if isinstance(module, nn.Linear):                                       #   │ ◀ Initialize Linear Layers
+            self.init_type(module.weight, **self.init_conf['linear'])           #   │
+            if module.bias is not None:                                         #   │
                 nn.init.constant_(module.bias, 0)                               #   │
-        elif isinstance(module, nn.Conv2d):                                     #   ◀ Initialize Convolutional Layers
-            self.init_type(module.weight, **self.init_conf['conv'])             #   │            
-            if module.bias is not None:                                         #   │                  
+        elif isinstance(module, nn.Conv2d):                                     #   │ ◀ Initialize Convolutional 
+            self.init_type(module.weight, **self.init_conf['conv'])             #   │   Layers
+            if module.bias is not None:                                         #   │
                 nn.init.constant_(module.bias, 0)                               #   ╯
 
 
@@ -150,7 +150,7 @@ class CNN(nn.Module):
     @torch.no_grad()
     def predict(self, x):                                                       # ◀┬─ performs inference by
         self.eval()                                                             #  │  taking the most probable
-        logits = self(x)                                                        #  │  label (doens't compute 
+        logits = self(x)                                                        #  │  label (doesn't compute 
         return logits.argmax(dim=-1)                                            #  ╯  the softamx)
 
 
@@ -175,4 +175,4 @@ class CNN(nn.Module):
             self.load_state_dict(torch.load(file, weights_only=True))           #  │
             print('model loaded')                                               #  │
         except Exception as e:                                                  #  │
-            print("Model weights not avaiable \n\n", e)                         #  ╯
+            warnings.warn("Model weights not avaiable \n\n")                    #  ╯

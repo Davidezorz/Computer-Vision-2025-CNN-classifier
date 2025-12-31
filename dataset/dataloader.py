@@ -2,7 +2,7 @@ import torch
 from torchvision import datasets, transforms
 from torchvision.datasets import ImageFolder
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import DataLoader, Subset, ConcatDataset
 import os
 import numpy as np
 
@@ -17,7 +17,7 @@ class ChannelMean:                                                              
 class DatasetManager:
     
     def __init__(self, folder_path: str, resolution, val_split: float = 0.1, 
-                 normalize: bool = True):
+                 normalize: bool = True, agumented: list = []):
         self.folder_path = folder_path
         self.resolution  = resolution
         self.val_split   = val_split
@@ -25,13 +25,15 @@ class DatasetManager:
 
         transform_steps = [
             transforms.Resize(self.resolution),
-            transforms.ToTensor(),  # This always converts to [0.0, 1.0]
+            transforms.ToTensor(),                                              # Converts to [0.0, 1.0]
+            ChannelMean()
         ]
 
         if not self.normalize:
             transform_steps.append(transforms.Lambda(lambda x: x * 255.0))
-        transform_steps.append(ChannelMean())
 
+        self.agumented = agumented != []
+        self.transform_agu = transforms.Compose(transform_steps + agumented)
         self.transform = transforms.Compose(transform_steps)
 
 
@@ -40,7 +42,7 @@ class DatasetManager:
         test_folder  = os.path.join(self.folder_path, 'test')                   # ◀─┴ test folders
 
         train_data = ImageFolder(root=train_folder, transform=self.transform)   # ◀─┬ open data and apply
-        test_data  = ImageFolder(root=test_folder,  transform=self.transform)   # ◀─┴ transformations
+        test_data  = ImageFolder(root=test_folder,  transform=self.transform)   # ◀─╯ transformations
 
         targets = train_data.targets                                            # ◀── Extract the labels 
         train_idx, val_idx = train_test_split(                                  # ◀─┬ Use sk to generate stratified indices
@@ -52,6 +54,13 @@ class DatasetManager:
 
         X_train = Subset(train_data, train_idx)                                 #  ─╮ create the Subsets 
         X_val   = Subset(train_data, val_idx)                                   #  ─╯ using the indices
+
+        if self.agumented:                                                      # ◀─┬ If we have to apply data agumentation
+            agu_data    = ImageFolder(root=train_folder,                        #   │ ◀ apply agumented transfomration
+                                      transform=self.transform_agu)             #   │
+            X_train_aug = Subset(agu_data, train_idx)                           #   │ ◀ get the train subset
+            X_train     = ConcatDataset([X_train, X_train_aug])                 #  ─╯ ◀ update X_train
+    
 
         train_loader = DataLoader(X_train, batch_size=B, shuffle=True)          # ◀─╮ crete the Dataloader  
         val_loader   = DataLoader(X_val, batch_size=B, shuffle=False)           #   │ for each data subdset
