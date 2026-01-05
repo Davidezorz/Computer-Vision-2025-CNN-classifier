@@ -72,8 +72,11 @@ class convParser:
     def __init__(self):
         self.conv_modules     = {'conv2d': nn.Conv2d, 'maxpool2d': nn.MaxPool2d}
         self.linear_modules   = {'linear': nn.Linear}
-        self.function_modules = {'relu':   nn.ReLU,   'softmax': nn.Softmax,
-                                 'flatten': nn.Flatten}
+        self.function_modules = {'relu':        nn.ReLU,   
+                                 'softmax':     nn.Softmax,
+                                 'flatten':     nn.Flatten, 
+                                 'batchnorm2d': nn.BatchNorm2d,
+                                 'dropout':     nn.Dropout}
         self.skip_modlules    = {'skip_store': SkipStore, 'skip_add': SkipAdd}
 
         self.map_modules = {'conv':     self.conv_modules,
@@ -127,7 +130,8 @@ class convParser:
                     config[keys[0]], config[keys[1]] = values[0], values[1]     # ◀─┴ Set in_dim and out_dim
                 else:
                     value_str = value_str.replace("(", "").replace(")", "")     #   ╭ Clean tuples/ints
-                    values = [int(v.strip()) for v in value_str.split(",")]     # ◀─┤ Convert string to list of ints
+                    val       = [v.strip() for v in value_str.split(",")]       # ◀─┤ Clean values
+                    values = [int(v) if v.isdigit() else float(v) for v in val] # ◀─┤ Convert to list of ints or floats
                     config[type_str] = values if len(values)>1 else values[0]   # ◀─┴ Store as tuple if len > 1
             
             configs.append({ 'type':        module_type, 

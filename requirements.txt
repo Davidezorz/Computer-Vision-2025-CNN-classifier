@@ -4,3 +4,4 @@ torchvision   == 0.24.1
 seaborn       == 0.13.2
 matplotlib    == 3.10.7
 scikit-learn  == 1.7.2
+omegaconf     == 2.3.0

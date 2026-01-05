@@ -1,0 +1,14 @@
+
+==================================================
+EXPERIMENT LOG: 2026-01-05 10:57:34
+==================================================
+Model Name:      CNN_2d
+Parameters:      52,871
+Learning Rate:   0.0041
+Batch Size:      32
+Optimizer:       torch.optim.AdamW
+Transforms:      [{'type': 'torchvision.transforms.RandomHorizontalFlip', 'params': {'p': 1.0}}]
+Test Accuracy:   0.5802
+training time:    27.5406
+==================================================
+

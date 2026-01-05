@@ -1,0 +1,35 @@
+model:
+    name: "CNN_2_"
+    nn_config: |
+        conv2d    channels: ->8   kernel_size: (3, 3)  stride: (1, 1)
+        relu 
+        maxpool2d                 kernel_size: (2, 2)  stride: (2, 2)
+        conv2d    channels: ->16  kernel_size: (3, 3)  stride: (1, 1)
+        relu 
+        maxpool2d                 kernel_size: (2, 2)  stride: (2, 2)
+        conv2d    channels: ->32  kernel_size: (3, 3)  stride: (1, 1)
+        relu
+        flatten
+        linear    dims:         ->15
+
+normalize: False
+
+training:
+    B: 32
+    log_interval: 10
+    optim: 'torch.optim.AdamW'
+    opt: {}
+    lr: 11e-4
+    decay_lr: 1
+
+init:
+    type: 'torch.nn.init.normal_'
+    conf: {'conv': {'std': 0.01}, 'linear': {'std': 0.01}}
+
+
+transforms:
+    - type: torchvision.transforms.RandomHorizontalFlip
+      params: {p: 1.0}
+        
+    - type: torchvision.transforms.RandomRotation
+      params: {degrees: 45}

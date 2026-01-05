@@ -69,7 +69,7 @@ class Validation:
 
 def train(model, train_loader, val_loader, 
           optim_class = optim.Adam, optim_opt = {},
-          lr=1e-4, epochs=10, end_step=0.1, 
+          lr=1e-4, epochs=10, decay_lr=0.1, 
           log_interval=10, patience=5, device=None,
           use_amp=True):
       
@@ -85,7 +85,7 @@ def train(model, train_loader, val_loader,
     lr_scheduler = optim.lr_scheduler.LinearLR(                                 # ◀─┬ Learning rate scheduler: 
         optimizer,                                                              #   │ Decays LR per batch
         start_factor=1.0,                                                       #   │
-        end_factor=end_step,                                                    #   │
+        end_factor=decay_lr,                                                    #   │
         total_iters=epochs * len(train_loader)                                  #   │
     )                                                                           #  ─╯
 

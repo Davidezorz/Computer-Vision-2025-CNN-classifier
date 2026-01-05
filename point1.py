@@ -18,7 +18,7 @@ from utils import models_eval
 
 
 
-if __name__ == '__main__': # 18
+if __name__ == '__main__':
     flags = parseArgumets()
     setupMatplotlib()
 

@@ -1,0 +1,47 @@
+model:
+    name: "CNN_2e"
+    nn_config: |
+        conv2d      channels: ->8   kernel_size: (3, 3)  stride: (1, 1) padding: (1, 1)
+        batchnorm2d num_features: 8
+        relu
+        conv2d      channels: ->8   kernel_size: (3, 3)  stride: (1, 1)
+        batchnorm2d num_features: 8
+        relu 
+        maxpool2d                   kernel_size: (2, 2)  stride: (2, 2)
+        dropout     p: 0.5
+
+        conv2d      channels: ->16  kernel_size: (5, 5)  stride: (1, 1)  padding: (1, 1)
+        batchnorm2d num_features: 16
+        relu
+        conv2d      channels: ->16  kernel_size: (5, 5)  stride: (1, 1) 
+        batchnorm2d num_features: 16
+        relu 
+        maxpool2d                   kernel_size: (2, 2)  stride: (2, 2)
+        dropout     p: 0.5
+
+        conv2d      channels: ->32  kernel_size: (7, 7)  stride: (1, 1)
+        batchnorm2d num_features: 32
+        relu
+        dropout     p: 0.2
+        
+        flatten
+        linear    dims:         ->15
+    init:
+        type: 'torch.nn.init.kaiming_normal_'
+        conf: {'conv': {'mode': 'fan_out'}, 'linear': {'mode': 'fan_in'}}
+
+
+training:
+    B: 16
+    log_interval: 10
+    optim: 'torch.optim.AdamW'
+    opt: {}
+    lr: 51e-4 
+    decay_lr: 0.01
+
+
+data:
+    normalize: True
+    transforms:
+        -   type: torchvision.transforms.RandomHorizontalFlip
+            params: {p: 1.0}
