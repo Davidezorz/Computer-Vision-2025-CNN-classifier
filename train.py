@@ -53,10 +53,10 @@ class Validation:
             y_pred = logits.argmax(dim=-1)                                      # ◀─┤ predictions
             loss = criterion(logits, y)                                         # ◀─╯ and the loss
             
-            running_loss += loss.item()                                         # ◀─╮ Accumulate
+            running_loss += loss.item()                                         # ◀─┬ Accumulate
             running_accuracy += (y_pred == y).float().mean().item()             # ◀─╯ metrics
             
-        avg_loss   = running_loss / len(self.data_loader)                       # ◀─╮ Average over
+        avg_loss   = running_loss / len(self.data_loader)                       # ◀─┬ Average over
         avg_accuracy = running_accuracy / len(self.data_loader)                 # ◀─╯ total batches
         return avg_loss, avg_accuracy
 
@@ -68,7 +68,7 @@ class Validation:
 # ╰───────────────────────────────────────────────────────────────────────────╯
 
 def train(model, train_loader, val_loader, 
-          optim_class = optim.Adam, optim_opt = {},
+          optim_class = optim.Adam, optim_opt = {}, parameters=None,
           lr=1e-4, epochs=10, decay_lr=0.1, 
           log_interval=10, patience=5, device=None,
           use_amp=True):
@@ -79,7 +79,8 @@ def train(model, train_loader, val_loader,
     model.to(device)
     model.train()
     
-    optimizer = optim_class(model.parameters(), lr=lr, **optim_opt)             # ◀── optimizer setup
+    parameters = parameters if parameters else model.parameters()               #   ╭ optimizer setup
+    optimizer = optim_class(parameters, lr=lr, **optim_opt)                     # ◀─╯ 
     criterion = nn.CrossEntropyLoss()                                           # ◀── loss function setup
 
     lr_scheduler = optim.lr_scheduler.LinearLR(                                 # ◀─┬ Learning rate scheduler: 

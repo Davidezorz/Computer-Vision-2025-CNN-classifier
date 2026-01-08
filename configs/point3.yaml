@@ -1,0 +1,25 @@
+model:
+    name: "AlexNet"
+
+training:
+    B: 16
+    log_interval: 10
+    optim: 'torch.optim.AdamW'
+    opt: {}
+    lr: 51e-4 
+    decay_lr: 0.01
+
+
+data:
+    transforms_base:
+        types:  [torchvision.transforms.Resize, 
+                 torchvision.transforms.CenterCrop]
+        params: [{'size': 256}, {'size': 224}]
+    normalize:
+        types:  [torchvision.transforms.Normalize]
+        params: [{'mean': [0.485, 0.456, 0.406], 'std':  [0.229, 0.224, 0.225]}]
+    transforms:
+        -   types:  [torchvision.transforms.RandomHorizontalFlip]
+            params: [{p: 1.0}]
+
+

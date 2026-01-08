@@ -1,0 +1,14 @@
+
+==================================================
+LOG: 2026-01-08 16:43:16
+==================================================
+Model Name:      CNN_4
+Parameters:      52,871
+Learning Rate:   0.0035
+Batch Size:      32
+Optimizer:       torch.optim.AdamW
+Transforms:      [{'types': ['torchvision.transforms.RandomHorizontalFlip'], 'params': [{'p': 1.0}]}, {'types': ['torchvision.transforms.RandomRotation'], 'params': [{'degrees': [-12, 12]}]}, {'types': ['torchvision.transforms.RandomHorizontalFlip', 'torchvision.transforms.RandomRotation'], 'params': [{'p': 1.0}, {'degrees': [-12, 12]}]}]
+Test Accuracy:   0.6127
+training time:    67.5663
+==================================================
+

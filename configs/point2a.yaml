@@ -29,7 +29,10 @@ training:
 
 
 data:
-    normalize: False
+    normalize:
+        types: [dataset.transformations.ChannelMean,
+                dataset.transformations.Times255]
+        params: [{}, {}]
     transforms:
-        -   type: torchvision.transforms.RandomHorizontalFlip
-            params: {p: 1.0}
+        -   types: [torchvision.transforms.RandomHorizontalFlip]
+            params: [{p: 1.0}]

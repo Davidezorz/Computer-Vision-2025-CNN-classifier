@@ -1,5 +1,5 @@
 model:
-    name: "CNN_2c"
+    name: "CNN_4"
     nn_config: |
         conv2d      channels: ->8   kernel_size: (3, 3)  stride: (1, 1) padding: (1, 1)
         batchnorm2d num_features: 8
@@ -8,6 +8,7 @@ model:
         batchnorm2d num_features: 8
         relu 
         maxpool2d                   kernel_size: (2, 2)  stride: (2, 2)
+        dropout     p: 0.5
 
         conv2d      channels: ->16  kernel_size: (5, 5)  stride: (1, 1)  padding: (1, 1)
         batchnorm2d num_features: 16
@@ -16,32 +17,41 @@ model:
         batchnorm2d num_features: 16
         relu 
         maxpool2d                   kernel_size: (2, 2)  stride: (2, 2)
+        dropout     p: 0.5
 
         conv2d      channels: ->32  kernel_size: (7, 7)  stride: (1, 1)
         batchnorm2d num_features: 32
         relu
+        dropout     p: 0.2
         
         flatten
         linear    dims:         ->15
     init:
-        type: 'torch.nn.init.normal_'
-        conf: {'conv': {'std': 0.01}, 'linear': {'std': 0.01}}
+        type: 'torch.nn.init.kaiming_normal_'
+        conf: {'conv': {'mode': 'fan_out'}, 'linear': {'mode': 'fan_in'}}
 
 
 training:
-    B: 32
-    log_interval: 10
-    optim: 'torch.optim.SGD'
-    opt: {'momentum': 0.9}
-    lr: 11e-4
-    decay_lr: 1
+    B: 16
+    log_interval: 20
+    optim: 'torch.optim.AdamW'
+    opt: {}
+    lr: 35e-4 
+    decay_lr: 0.01
 
 
 data:
     normalize:
-        types: [dataset.transformations.ChannelMean,
-                dataset.transformations.Times255]
-        params: [{}, {}]
+        types: [dataset.transformations.ChannelMean]
+        params: [{}]
     transforms:
         -   types: [torchvision.transforms.RandomHorizontalFlip]
             params: [{p: 1.0}]
+
+        -   types: [torchvision.transforms.RandomRotation]
+            params: [{degrees: [-12, 12]}]
+
+        -   types: [torchvision.transforms.RandomHorizontalFlip,
+                    torchvision.transforms.RandomRotation]
+            params: [{p: 1.0}, 
+                     {degrees: [-12, 12]}]

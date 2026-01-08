@@ -1,14 +1,14 @@
 
 ==================================================
-LOG: 2026-01-08 14:02:07
+LOG: 2026-01-08 18:30:36
 ==================================================
-Model Name:      CNN_2e
-Parameters:      52,871
+Model Name:      AlexNet
+Parameters:      57,065,295
 Learning Rate:   0.0051
 Batch Size:      32
 Optimizer:       torch.optim.AdamW
 Transforms:      [{'types': ['torchvision.transforms.RandomHorizontalFlip'], 'params': [{'p': 1.0}]}]
-Test Accuracy:   0.5977
-training time:    68.4587
+Test Accuracy:   0.8087
+training time:    28.8047
 ==================================================
 

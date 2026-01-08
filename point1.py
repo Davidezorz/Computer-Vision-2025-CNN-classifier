@@ -8,6 +8,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from utils import models_eval 
+import dataset
 
 
 
@@ -58,8 +59,12 @@ if __name__ == '__main__':
     print('getting data...')
     folder_path = '.data/'                                                      # ◀─┬ define the folder path
     B = 32                                                                      # ◀─┴ and the batch size
-    dataset_mng = DatasetManager(folder_path, image_dims, val_split=0.15,       # ◀─┬ Instantiating the class
-                                 normalize=False)                               #   ╯ that retrive dataloaders
+    
+    normalization = [dataset.transformations.ChannelMean,
+                     dataset.transformations.Times255]
+    dataset_mng = DatasetManager(folder_path, image_dims, val_split=0.15,       # ◀─┬ Instantiating the class 
+                                 pipe_norm = normalization)                     #   ╯ that retrive dataloaders
+
 
     data_loaders, classes = dataset_mng.get(B)                                  #   ╮ Getting the
     train_loader, val_loader, test_loader = data_loaders                        # ◀─┴ dataloaders
