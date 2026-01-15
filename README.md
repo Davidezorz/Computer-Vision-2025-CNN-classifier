@@ -21,6 +21,7 @@ The project is organized as follows:
 - **`models/`**:
   - `generalCNN.py`: Dynamic CNN builder.
   - `SVMs.py`: Implementations of Multiclass SVMs (OVO, DAG, ECOC).
+  - `ViT.py`: Implementation of a vision transformer.
 - **`dataset/`**:
   - `dataloader.py`: Handles image loading, stratified splitting, and transformations.
 - **`parsing/`**:
@@ -178,6 +179,7 @@ python pointSVM.py --config-path configs/point7rbf.yaml
 | **Point 3a** | **AlexNet Fine-Tuning** | **~85.2%** |
 | **Point 3b** | AlexNet + Linear SVM | ~85.3% |
 | **Point 6** | AlexNet + RBF SVM | ~86.3% |
+| **Point ViT** | ViT | ~38.86% |
 
 ## 🛠 Technical Highlights
 
