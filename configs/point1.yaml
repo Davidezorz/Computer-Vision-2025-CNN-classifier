@@ -1,0 +1,42 @@
+save_path: results/point1/
+model:
+    name: "CNN_1"
+    nn_config: |
+        conv2d    channels: ->8   kernel_size: (3, 3)  stride: (1, 1)
+        relu 
+        maxpool2d                 kernel_size: (2, 2)  stride: (2, 2)
+
+        conv2d    channels: ->16  kernel_size: (3, 3)  stride: (1, 1)
+        relu 
+        maxpool2d                 kernel_size: (2, 2)  stride: (2, 2)
+
+        conv2d    channels: ->32  kernel_size: (3, 3)  stride: (1, 1)
+        relu
+        
+        flatten
+        linear    dims:         ->15
+    init:
+        type: 'torch.nn.init.normal_'
+        conf: {'conv': {'std': 0.01}, 'linear': {'std': 0.01}}
+
+
+training:
+    B: 32
+    log_interval: 40
+    patience: 9
+    optim: 'torch.optim.SGD'
+    opt: {'momentum': 0.9}
+    lr: 80e-5
+
+
+data:
+    transformations:
+        base:
+            -   types:  torchvision.transforms.Resize
+                params: {'size': [64, 64]}
+        normalization:
+            -   types:  dataset.transformations.ChannelMean
+                params: {}
+            -   types:  dataset.transformations.Times255
+                params: {}
+            

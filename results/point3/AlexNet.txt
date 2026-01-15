@@ -1,14 +1,18 @@
 
 ==================================================
-LOG: 2026-01-08 18:30:36
+LOG: 2026-01-12 23:44:01
 ==================================================
 Model Name:      AlexNet
 Parameters:      57,065,295
-Learning Rate:   0.0051
+Learning Rate:   0.0015
 Batch Size:      32
 Optimizer:       torch.optim.AdamW
-Transforms:      [{'types': ['torchvision.transforms.RandomHorizontalFlip'], 'params': [{'p': 1.0}]}]
-Test Accuracy:   0.8087
-training time:    28.8047
+Transforms:      
+    - Resize(size=[256, 256], interpolation=bilinear, max_size=None, antialias=True)      
+    - RandomCrop(size=(224, 224), padding=None)      
+    - Resize(size=[224, 224], interpolation=bilinear, max_size=None, antialias=True)      
+    - Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])      
+Test Accuracy:   0.8523
+training time:    138.3040
 ==================================================
 

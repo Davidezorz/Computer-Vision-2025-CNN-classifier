@@ -1,4 +1,4 @@
-from models.parser import convParser
+from parsing.convParser import convParser
 from models.generalCNN import CNN
 from dataset import dataloader
 import torch

@@ -112,7 +112,6 @@ class CNN(nn.Module):
             self.current_dims = [kwargs['out_features']]                        # ◀── collapse everything into a 1D feature vector
 
 
-
     def _outDim(self, in_dim, kwargs, idx):
         """ Calculates output spatial dimension: 
         https://docs.pytorch.org/docs/stable/generated/torch.nn.Conv2d.html """ 

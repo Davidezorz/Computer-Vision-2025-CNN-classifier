@@ -1,3 +1,4 @@
+save_path: results/point2/
 model:
     name: "CNN_2e"
     nn_config: |
@@ -32,18 +33,23 @@ model:
 
 
 training:
-    B: 16
-    log_interval: 10
+    B: 32
+    log_interval: 20
+    patience: 9
     optim: 'torch.optim.AdamW'
     opt: {}
-    lr: 51e-4 
+    lr: 41e-4 
     decay_lr: 0.01
 
 
 data:
-    normalize:
-        types: [dataset.transformations.ChannelMean]
-        params: [{}, {}]
-    transforms:
-        -   types: [torchvision.transforms.RandomHorizontalFlip]
-            params: [{p: 1.0}]
+    transformations:
+        base:
+            -   types:  torchvision.transforms.Resize
+                params: {'size': [64, 64]}
+        train:
+            -   types:  torchvision.transforms.RandomHorizontalFlip
+                params: {p: 0.5}
+        normalization:
+            -   types:  dataset.transformations.ChannelMean
+                params: {}

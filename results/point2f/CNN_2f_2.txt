@@ -1,0 +1,17 @@
+
+==================================================
+LOG: 2026-01-14 15:34:22
+==================================================
+Model Name:      CNN_2f_2
+Parameters:      52,871
+Learning Rate:   0.0031
+Batch Size:      32
+Optimizer:       torch.optim.AdamW
+Transforms:      
+    - Resize(size=[64, 64], interpolation=bilinear, max_size=None, antialias=True)      
+    - RandomHorizontalFlip(p=0.5)      
+    - <dataset.transformations.ChannelMean object at 0x12b8417f0>      
+Test Accuracy:   0.5916
+training time:   -
+==================================================
+

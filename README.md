@@ -60,7 +60,7 @@ python -m tests.name_of_the_test
 ### Solving Point 1
 To solve point one of the exercise, run:
 ```
-python point1.py
+python solve.py -config_path='configs/point1.yaml' -train true
 ```
 
 

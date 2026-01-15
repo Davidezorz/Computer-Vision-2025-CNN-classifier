@@ -1,0 +1,17 @@
+
+==================================================
+LOG: 2026-01-14 15:08:41
+==================================================
+Model Name:      AlexNet_ECOC_SVM_rbf
+Parameters:      57,003,840
+Batch Size:      32
+kernel:          rbf
+Transforms:      
+    - Resize(size=[256, 256], interpolation=bilinear, max_size=None, antialias=True)      
+    - RandomCrop(size=(224, 224), padding=None)      
+    - Resize(size=[224, 224], interpolation=bilinear, max_size=None, antialias=True)      
+    - Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])      
+Test Accuracy:   0.8459
+training time:    34.6394
+==================================================
+

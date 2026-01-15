@@ -1,0 +1,20 @@
+
+==================================================
+LOG: 2026-01-14 22:40:46
+==================================================
+Model Name:      CNN_4b
+Parameters:      52,871
+Learning Rate:   0.0041
+Batch Size:      32
+Optimizer:       torch.optim.AdamW
+Transforms:      
+    - Resize(size=[75, 75], interpolation=bilinear, max_size=None, antialias=True)      
+    - RandomHorizontalFlip(p=0.5)      
+    - RandomRotation(degrees=[-11.0, 11.0], interpolation=bilinear, expand=False, fill=0)      
+    - RandomCrop(size=(64, 64), padding=None)      
+    - Resize(size=[64, 64], interpolation=bilinear, max_size=None, antialias=True)      
+    - <dataset.transformations.ChannelMean object at 0x12980a660>      
+Test Accuracy:   0.5933
+training time:    40.9697
+==================================================
+

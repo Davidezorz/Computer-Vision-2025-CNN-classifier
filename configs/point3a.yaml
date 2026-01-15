@@ -1,0 +1,32 @@
+save_path: results/point3/
+model:
+    name: "AlexNet"
+
+
+
+training:
+    B: 32
+    log_interval: 40
+    patience: 15
+    optim: 'torch.optim.AdamW'
+    opt: {}
+    lr: 15e-4  # 35
+    decay_lr: 0.1
+
+
+
+data:
+    transformations:
+        train:
+            -   types:  torchvision.transforms.Resize
+                params: {'size': [256, 256]}
+            -   types:  torchvision.transforms.RandomCrop
+                params: {'size': [224, 224]}
+        test:
+            -   types:  torchvision.transforms.Resize
+                params: {'size': [224, 224]}
+        normalization:
+            -   types:  torchvision.transforms.Normalize
+                params: {'mean': [0.485, 0.456, 0.406], 
+                         'std':  [0.229, 0.224, 0.225]}
+

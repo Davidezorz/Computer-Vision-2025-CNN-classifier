@@ -1,3 +1,4 @@
+save_path: results/point2/
 model:
     name: "CNN_2c"
     nn_config: |
@@ -38,10 +39,15 @@ training:
 
 
 data:
-    normalize:
-        types: [dataset.transformations.ChannelMean,
-                dataset.transformations.Times255]
-        params: [{}, {}]
-    transforms:
-        -   types: [torchvision.transforms.RandomHorizontalFlip]
-            params: [{p: 1.0}]
+    transformations:
+        base:
+            -   types:  torchvision.transforms.Resize
+                params: {'size': [64, 64]}
+        train:
+            -   types:  torchvision.transforms.RandomHorizontalFlip
+                params: {p: 0.5}
+        normalization:
+            -   types:  dataset.transformations.ChannelMean
+                params: {}
+            -   types:  dataset.transformations.Times255
+                params: {}

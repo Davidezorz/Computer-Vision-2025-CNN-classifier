@@ -1,14 +1,18 @@
 
 ==================================================
-LOG: 2026-01-08 16:41:48
+LOG: 2026-01-14 15:23:40
 ==================================================
 Model Name:      CNN_2b
 Parameters:      75,135
 Learning Rate:   0.0011
 Batch Size:      32
 Optimizer:       torch.optim.SGD
-Transforms:      [{'types': ['torchvision.transforms.RandomHorizontalFlip'], 'params': [{'p': 1.0}]}]
-Test Accuracy:   0.5430
-training time:    28.0789
+Transforms:      
+    - Resize(size=[64, 64], interpolation=bilinear, max_size=None, antialias=True)      
+    - RandomHorizontalFlip(p=0.5)      
+    - <dataset.transformations.ChannelMean object at 0x12a2eb0e0>      
+    - <dataset.transformations.Times255 object at 0x12a2eb230>      
+Test Accuracy:   0.4529
+training time:    11.1823
 ==================================================
 

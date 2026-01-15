@@ -75,22 +75,103 @@ def plotConfusionMatrix(cm, classes=None, show=True, save_path=None):
 
 
 def plotLoss(y1, y2, show=True, save_path=None, title='loss plot',
-             xlabel = 'steps' , ylabel='loss'):
+             xlabel = 'steps' , ylabel='loss', line_at=None, 
+             ylim=None, r: float = 1):
     y1, y2 = np.array(y1), np.array(y2)
+    y_tot = np.hstack([y1, y2])
+    ylim = ylim if ylim != None else [np.min(y_tot), 1.1*np.max(y_tot)]
      
-    x = np.arange(y1.shape[0])
+    x = np.arange(y1.shape[0])*r
+
     fig, ax = plt.subplots(figsize=(14, 14))
-    ax.plot(x, y1, label='train', color='blue')
-    ax.plot(x, y2, label='validation', color='purple')
-    ax.legend()
+    ax.plot(x, y1, label='train', color='#561A66')
+    ax.plot(x, y2, label='validation', color='#FF8D13', linestyle='dashed')
+    
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
 
-    y_max = max(y1.max(), y2.max())*1.1
-    y_min = min(y1.min(), y2.min())*0.9
-    ax.set_ylim(y_min, y_max)
-
+    ax.set_ylim(*ylim)
+    if line_at is not None: ax.vlines(line_at*r, *ylim, linestyle='dashed', 
+                                      color="#0F0F0F",
+                                      label='best validation')
+    
+    ax.legend()
     if save_path: fig.savefig(save_path, bbox_inches='tight')
     _ = plt.show() if show else plt.close(fig)
     return ax
+
+
+
+
+
+
+def plotExamples(X, y, y_preds=None, save_path="", class_names=None):
+    """
+    Saves a 3x3 grid of images comparing True vs Predicted labels.
+    
+    Args:
+        X:           Tensor  Batch of images.
+        y:           Tensor  True labels.
+        y_pred:      Tensor  Predicted labels (optional).
+        save_path:   str     The filename/path to save the resulting image.
+        class_names: list    List of class names mapping to label indices.
+    """
+    
+    fig, axes = plt.subplots(3, 3, figsize=(14, 14))
+    axes = axes.flatten()
+
+    for i in range(9):
+        ax = axes[i]
+
+        if i >= len(X): 
+            ax.axis('off')
+            continue
+
+        img = X[i].permute(1, 2, 0).cpu().numpy()
+        img = (img - img.min()) / (img.max() - img.min())
+        ax.imshow(img, cmap='gray')
+        
+        y_true = y[i].item()
+        true_text = class_names[y_true] if class_names else str(y_true)
+
+        title_color = 'black'
+        title = f"True: {true_text}"
+
+        if y_preds is not None:
+            y_pred = y_preds[i].item()
+            pred_text = class_names[y_pred] if class_names else str(y_pred)
+            title = title +  f"\nPred: {pred_text}"
+            title_color =  'green' if y_true == y_pred else 'red'
+
+        ax.set_title(title, fontsize=12, color=title_color, fontweight='bold')
+        ax.axis('off') 
+
+    plt.tight_layout()
+    file_name = save_path + '_examples.png'
+    plt.savefig(file_name)
+    print(f"Grid saved successfully to: {file_name}")
+    plt.close(fig)
+
+
+
+
+@torch.no_grad()
+def storeExamples(cnn, train_loader, test_loader, 
+                  classes, plot_path, device):
+    
+    temp_loader = torch.utils.data.DataLoader(
+        test_loader.dataset, 
+        batch_size=9, 
+        shuffle=True 
+    )
+
+    loaders = [train_loader, temp_loader]
+    for loader, type_loader in zip(loaders, ['_train', '_test']):
+        X, y = next(iter(loader))
+        X, y = X.to(device), y.to(device)
+
+        y_pred=cnn.predict(X)
+        plotExamples(X, y, y_pred,
+                    save_path=plot_path + type_loader, 
+                    class_names=classes)

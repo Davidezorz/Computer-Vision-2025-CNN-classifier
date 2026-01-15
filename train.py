@@ -15,20 +15,24 @@ class Validation:
         self.best_loss    = float('inf')                                        # ◀─╮ Track best
         self.best_weights = None                                                #   ╰ performance
         self.data_loader  = data_loader
-        
+        self.n_updates = 0
+        self.best_n = 0
+
         self.patience     = patience                                            # ◀─╮
         self.min_delta    = min_delta                                           #   │
         self.counter      = 0                                                   #   │ Early Stopping
         self.early_stop   = False                                               #   ╰ parameters
 
-
+    @torch.no_grad()
     def update(self, criterion, model):
+        self.n_updates += 1
         val_loss, val_accuracy = self.computeLoss(criterion, model)             # ◀── Run evaluation pass
         
         if val_loss < (self.best_loss - self.min_delta):                        # ◀─┬ Check for improvement
             self.best_loss = val_loss                                           # ◀─┤ Store the best loss 
             self.best_weights = copy.deepcopy(model.state_dict())               # ◀─┤ Save deepcopy of weights
             self.counter = 0                                                    # ◀─╯ Reset patience counter
+            self.best_n = self.n_updates
         else:                                                                   # ◀─┬ No improvement
             self.counter += 1                                                   # ◀─┤ Uodate counter
             if self.counter >= self.patience:                                   # ◀─┤ Check patience limit
@@ -114,8 +118,7 @@ def train(model, train_loader, val_loader,
         for i, (X, y) in enumerate(train_loader):
             X, y = X.to(device), y.to(device)
             
-            optimizer.zero_grad()                                               # ◀─┬ Reset gradients
-            
+            optimizer.zero_grad()                                               # ◀── Reset gradients
             with torch.amp.autocast(device_type=device, dtype=torch.float16,    # ◀─┬ This automatically casts operations 
                                     enabled=use_amp):                           #   ╰ to float16 where safe (not on CPU)
                 logits = model(X)                                               # ◀─┬ Compute the predictions
@@ -159,7 +162,8 @@ def train(model, train_loader, val_loader,
         
         if validation.early_stop:                                               # Break epoch loop if early stop triggered
             break
-            
+
+    losses['best_n'] = validation.best_n
     # Final load of best weights
     if validation.getWeights() is not None:
         model.load_state_dict(validation.getWeights())

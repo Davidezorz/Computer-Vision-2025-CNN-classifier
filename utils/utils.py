@@ -1,12 +1,8 @@
 import torch
 import matplotlib.pyplot as plt
-import argparse
 import datetime
 import pydoc
 from dataset.transformations import ChannelMean, Times255
-import omegaconf
-from omegaconf import OmegaConf
-
 
 def getDevice(device: str = None) -> str:                                       #   ╭ Device auto
     """Selects the best available device or verifies the requested one."""      # ◀─┤ detection  
@@ -26,25 +22,6 @@ def setupMatplotlib():
 
 
 
-def parseArgumets():
-    parser = argparse.ArgumentParser(description="Script for training and plotting")
-    
-    parser.add_argument('-train', type=str, default='True', 
-                    help='Set to False to skip training')
-    
-    parser.add_argument('-config_path', type=str, default='Adam', 
-                        help='path to the config file')
-
-    args = parser.parse_args()
-
-    config = {}
-    config['do training'] = args.train.lower() in ('true', '1', 't', 'yes')
-    config['config_path'] = args.config_path
-
-
-    return config
-
-
 
 def numberOfparameters(model):
     n = sum([p.numel() for p in model.parameters()])
@@ -52,7 +29,8 @@ def numberOfparameters(model):
 
 
 
-def saveLog(filepath, model_name, config, 
+
+def saveLog(filepath, model_name, config, transforms_list,
                         n_params, accuracy, training_time):
     """ Appends a summary of the experiment to a text file. """
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -63,13 +41,21 @@ def saveLog(filepath, model_name, config,
         f.write(f"LOG: {timestamp}\n")
         f.write(f"{separator}\n")
         
+        lr = config.training.get('lr')
+        B = config.training.get('B')
+        optim = config.training.get('optim')
+        kernel = config.model.get('kernel')
+
         f.write(f"Model Name:      {model_name}\n")
         f.write(f"Parameters:      {n_params:,}\n") 
-        f.write(f"Learning Rate:   {config.training.lr}\n")
-        f.write(f"Batch Size:      {32}\n") 
-        f.write(f"Optimizer:       {config.training.optim}\n")
-        f.write(f"Transforms:      {config.data.transforms}\n") 
-        
+        if lr:     f.write(f"Learning Rate:   {lr}\n")
+        if B:      f.write(f"Batch Size:      {B}\n") 
+        if kernel: f.write(f"kernel:          {kernel}\n") 
+        if optim:  f.write(f"Optimizer:       {optim}\n")
+        f.write(f"Transforms:      \n") 
+        for transforms in transforms_list:
+            for transform in transforms:
+                f.write(f"    - {transform}      \n") 
         f.write(f"Test Accuracy:   {accuracy:.4f}\n")
 
         training_time = f"{training_time: .4f}" if training_time else '-'
@@ -82,33 +68,34 @@ def saveLog(filepath, model_name, config,
 
 def processTransforms(config):
     """ Extracts normalization steps and a list of augmentation pipelines. """
-    
-    pipe_base    = OmegaConf.select(config, "data.transforms_base")            # 1. Parse Base steps
-    pipe_base    = parseBlock(pipe_base) 
-    
-    pipes_aug = OmegaConf.select(config, "data.transforms")                    # 2. Parse Augmentations (list of pipelines)
-    if pipes_aug:                                         
-        pipes_aug = [parseBlock(p) for p in config.data.transforms]
-    
-    pipe_norm    = OmegaConf.select(config, "data.normalize")                   # 3. Parse Normalization (applied to everyone)
-    pipe_norm    = parseBlock(pipe_norm)                                        
-    
-    return pipe_base, pipes_aug, pipe_norm
+
+    tranforms = config.data.transformations
+    pipelines = []
+    for string in ['base', 'train', 'test', 'normalization']:
+        pipeline_type = tranforms.get(string)
+        pipeline_type = pipeline_type if pipeline_type else []
+        pipeline = [parseBlock(pipe) for pipe in pipeline_type]
+        pipelines.append(pipeline)
+
+    return pipelines
 
 
+def parseBlock(pipe):   
+    cls = pydoc.locate(pipe.types)  
 
-def parseBlock(block_config):
-    """ Parses a single block containing a list of types and a list of params.
-    Returns: A list of instantiated Python objects.  """
+    kwargs_str = pipe.get('params') if pipe.get('params') else {}
     
-    transforms = []
-    if block_config:
-        types, params = block_config.types, block_config.params  
+    kwargs = {}
+    for key, value in kwargs_str.items():
+        if isinstance(value, str) and '.' in value:
+            obj = pydoc.locate(value)
+            kwargs[key] = obj if obj is not None else value
+        else:
+            kwargs[key] = value
 
-        for cls_str, args in zip(types, params):
-            cls = pydoc.locate(cls_str)        
-            kwargs = args if args else {}
-            transforms.append(cls(**kwargs))
-        
-    return transforms
+    #print(f"pipe.types: {pipe.types}   kwargs: {kwargs}")
+    instance = cls(**kwargs)
+    return instance
+
+
 
