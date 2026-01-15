@@ -25,7 +25,8 @@ model:
 
 training:
     B: 32
-    log_interval: 10
+    log_interval: 20
+    patience: 20
     optim: 'torch.optim.SGD'
     opt: {'momentum': 0.9}
     lr: 11e-4

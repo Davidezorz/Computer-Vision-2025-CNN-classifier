@@ -1,6 +1,6 @@
 
 ==================================================
-LOG: 2026-01-14 15:21:59
+LOG: 2026-01-15 12:36:07
 ==================================================
 Model Name:      CNN_2a
 Parameters:      75,023
@@ -10,9 +10,9 @@ Optimizer:       torch.optim.SGD
 Transforms:      
     - Resize(size=[64, 64], interpolation=bilinear, max_size=None, antialias=True)      
     - RandomHorizontalFlip(p=0.5)      
-    - <dataset.transformations.ChannelMean object at 0x129e030e0>      
-    - <dataset.transformations.Times255 object at 0x129e03230>      
+    - <dataset.transformations.ChannelMean object at 0x12be6b0e0>      
+    - <dataset.transformations.Times255 object at 0x12be6b230>      
 Test Accuracy:   0.3320
-training time:    24.2226
+training time:    24.0823
 ==================================================
 

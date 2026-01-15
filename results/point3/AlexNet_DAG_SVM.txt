@@ -1,6 +1,6 @@
 
 ==================================================
-LOG: 2026-01-13 14:47:24
+LOG: 2026-01-15 15:18:53
 ==================================================
 Model Name:      AlexNet_DAG_SVM
 Parameters:      57,003,840
@@ -12,6 +12,6 @@ Transforms:
     - Resize(size=[224, 224], interpolation=bilinear, max_size=None, antialias=True)      
     - Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])      
 Test Accuracy:   0.8533
-training time:    0.5099
+training time:    0.2770
 ==================================================
 

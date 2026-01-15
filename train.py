@@ -76,7 +76,22 @@ def train(model, train_loader, val_loader,
           lr=1e-4, epochs=10, decay_lr=0.1, 
           log_interval=10, patience=5, device=None,
           use_amp=True):
-      
+    """
+    The main function that performs the training loop.
+
+    It handles the following steps:
+    1. Setup: Prepares the device (GPU/CPU), optimizer, and scheduler.
+    2. Loop: Iterates through epochs and batches of training data.
+    3. Optimization: Calculates gradients and updates weights. It uses 
+       Automatic Mixed Precision (AMP) to speed up training on GPUs.
+    4. Validation: Periodically calls the Validation class to check performance
+       and checks for early stopping.
+    5. Finalize: Loads the best weights found during training before returning.
+
+    Returns:
+        losses (dict): A dictionary containing the history of training and 
+                       validation losses/accuracies.
+    """
     device = getDevice(device)                                                  # ◀─╮ Device
     print(f"Training on: {device}")                                             #   ╰ handling
     
