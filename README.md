@@ -165,6 +165,13 @@ python pointSVM.py --config-path configs/point7.yaml
 python pointSVM.py --config-path configs/point7rbf.yaml
 ```
 
+**Point ViT: Vision Transformer**
+Used a vision transformer with small embedding dimension and patch size.
+```bash
+python pointViT.py --config-path configs/vit.yaml
+
+```
+
 ## 📊 Results Summary
 
 | Method | Description | Test Accuracy (Approx) |
@@ -184,9 +191,13 @@ python pointSVM.py --config-path configs/point7rbf.yaml
 ## 🛠 Technical Highlights
 
 ### Custom Parser (`parsing/convParser.py`)
-To simplify architecture definitions, a string-based parser was implemented. It converts a list of strings in the YAML config into a PyTorch `nn.Sequential` model.
-* **Example Input:** `['conv2d', 'channels: 8', 'kernel_size: (3,3)', 'relu', 'maxpool2d']`
+To simplify architecture definitions, a string-based parser was implemented. It converts a strings in the dict config for a CNN model.
+* **Example Input:** `conv2d ->8 kernel_size: (3, 3)`
+
+The output of such convParser will be a input of the CNN in (`generalCNN.py`)
 * **Functionality:** Automatically calculates output dimensions between blocks (handling Flatten layers).
+* **Returns:** The described CNN
+
 
 ### Training Loop (`train.py`)
 Features a robust training procedure including:
